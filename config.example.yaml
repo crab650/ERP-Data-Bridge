@@ -1,0 +1,27 @@
+source:
+  type: mssql
+  server: "SOURCE_SERVER"
+  database: "SourceDatabase"
+  username: "sa"
+  password_env: "SOURCE_DB_PASSWORD"
+  driver: "ODBC Driver 17 for SQL Server"
+  trust_server_certificate: true
+
+target:
+  type: mssql
+  server: "TARGET_SERVER"
+  database: "TargetDatabase"
+  username: "sa"
+  password_env: "TARGET_DB_PASSWORD"
+  driver: "ODBC Driver 17 for SQL Server"
+  trust_server_certificate: true
+
+options:
+  tables: []
+  batch_size: 5000
+  if_exists: recreate
+  include_data: true
+  include_primary_keys: true
+  include_indexes: true
+  preserve_identity: true
+  verify_row_counts: true
