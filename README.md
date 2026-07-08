@@ -103,26 +103,6 @@ options:
   where: {}
 ```
 
-## SCADA Utilities
-
-This repository also includes helper scripts for checking SCADA archive completeness after exporting data to SQLite.
-
-```powershell
-python .\check_missing_hours.py
-```
-
-`check_missing_hours.py` reads `data/sif_sqlite.db`, checks `C_SCADA_DataArchive`, and compares missing values across a 30-minute grid for June 2026.
-
-```powershell
-python .\generate_scada_report.py
-```
-
-`generate_scada_report.py` creates a pivot-style CSV report where each SCADA point is a column and each 30-minute timestamp is a row. Blank cells represent missing or invalid values.
-
-`SCADA_Data_Imputation_Guide.md` documents the planned detection and imputation approach, including missing timestamp detection, NaN/null handling, linear interpolation, forward/backward fill, rolling means, and historical seasonal filling.
-
-Database files and generated reports are intentionally ignored by Git. Keep real exports such as `*.db`, `*.sqlite`, and generated CSV files local.
-
 ## Current Scope
 
 Implemented:
@@ -166,8 +146,6 @@ db_migrator/
     mssql.py               SQL Server source/target implementation
     sqlite.py              SQLite target implementation
 
-check_missing_hours.py     SCADA missing-data comparison script
-generate_scada_report.py   SCADA CSV report generator
 config.example.yaml        Example config without real secrets
 requirements.txt           Python package requirements
 ```
