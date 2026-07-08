@@ -66,7 +66,7 @@ class DatabaseSource(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def count_rows(self, table: TableRef) -> int:
+    def count_rows(self, table: TableRef, where_clause: str | None = None) -> int:
         raise NotImplementedError
 
     @abstractmethod
@@ -74,6 +74,7 @@ class DatabaseSource(ABC):
         self,
         schema: TableSchema,
         batch_size: int,
+        where_clause: str | None = None,
     ) -> Iterable[list[tuple[Any, ...]]]:
         raise NotImplementedError
 

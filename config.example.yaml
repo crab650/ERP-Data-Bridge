@@ -16,6 +16,12 @@ target:
   driver: "ODBC Driver 17 for SQL Server"
   trust_server_certificate: true
 
+# To export into SQLite instead of SQL Server, replace the target block above with:
+#
+# target:
+#   type: sqlite
+#   database: "data/export.sqlite"
+
 options:
   tables: []
   batch_size: 5000
@@ -25,3 +31,8 @@ options:
   include_indexes: true
   preserve_identity: true
   verify_row_counts: true
+  # Optional per-table source filters. Keys can be full table names or table names.
+  # where:
+  #   dbo.C_SCADA_DataArchive: "Timestamp >= '2026-06-01' AND Timestamp < '2026-07-01'"
+  #   Customers: "IsActive = 1"
+  where: {}

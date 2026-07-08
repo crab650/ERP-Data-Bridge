@@ -84,7 +84,8 @@ class Migrator:
         return selected
 
     def _copy_data(self, schema) -> None:
-        total = self.source.count_rows(schema.table)
+        where_clause = self.options.where.get(schema.table.full_name) or self.options.where.get(schema.table.name)
+        total = self.source.count_rows(schema.table, where_clause)
         logger.info("Copying %s row(s) from %s", total, schema.table.full_name)
 
         with tqdm(
@@ -94,12 +95,13 @@ class Migrator:
             leave=True,
             colour="cyan",
         ) as progress:
-            for rows in self.source.iter_rows(schema, self.options.batch_size):
+            for rows in self.source.iter_rows(schema, self.options.batch_size, where_clause):
                 self.target.insert_rows(schema, rows, self.options.preserve_identity)
                 progress.update(len(rows))
 
     def _verify_row_count(self, table: TableRef) -> None:
-        source_count = self.source.count_rows(table)
+        where_clause = self.options.where.get(table.full_name) or self.options.where.get(table.name)
+        source_count = self.source.count_rows(table, where_clause)
         target_count = self.target.count_rows(table)
         if source_count != target_count:
             raise ValueError(
@@ -109,7 +111,8 @@ class Migrator:
         logger.info("Verified row count for %s: %s", table.full_name, source_count)
 
     def _preview_table(self, schema) -> None:
-        total = self.source.count_rows(schema.table) if self.options.include_data else 0
+        where_clause = self.options.where.get(schema.table.full_name) or self.options.where.get(schema.table.name)
+        total = self.source.count_rows(schema.table, where_clause) if self.options.include_data else 0
         logger.info(
             "DRY RUN %s: columns=%s, primary_key=%s, rows=%s, if_exists=%s",
             schema.table.full_name,

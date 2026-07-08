@@ -4,6 +4,7 @@ from typing import Any
 
 from .adapters.base import DatabaseSource, DatabaseTarget
 from .adapters.mssql import MssqlSource, MssqlTarget
+from .adapters.sqlite import SqliteTarget
 
 
 def create_source(config: dict[str, Any]) -> DatabaseSource:
@@ -18,5 +19,5 @@ def create_target(config: dict[str, Any]) -> DatabaseTarget:
     if target_type == "mssql":
         return MssqlTarget(config)
     if target_type == "sqlite":
-        raise NotImplementedError("SQLite target adapter is planned but not implemented yet.")
+        return SqliteTarget(config)
     raise ValueError(f"Unsupported target type: {target_type}")

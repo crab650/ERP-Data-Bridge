@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +18,7 @@ class MigrationOptions:
     include_indexes: bool = True
     preserve_identity: bool = True
     verify_row_counts: bool = True
+    where: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,7 @@ def load_config(path: str | Path) -> MigrationConfig:
             include_indexes=bool(options.get("include_indexes", True)),
             preserve_identity=bool(options.get("preserve_identity", True)),
             verify_row_counts=bool(options.get("verify_row_counts", True)),
+            where=dict(options.get("where") or {}),
         ),
     )
 

@@ -2,3 +2,7 @@ config.yaml
 config_*.yaml
 __pycache__/
 *.py[cod]
+*.db
+*.sqlite
+*.sqlite3
+data/*.csv

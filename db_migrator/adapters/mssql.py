@@ -181,18 +181,24 @@ class MssqlSource(DatabaseSource):
                 )
         return list(indexes.values())
 
-    def count_rows(self, table: TableRef) -> int:
+    def count_rows(self, table: TableRef, where_clause: str | None = None) -> int:
         cursor = self.connection.cursor()
-        row = cursor.execute(f"SELECT COUNT_BIG(*) FROM {quote_table(table)}").fetchone()
+        sql = f"SELECT COUNT_BIG(*) FROM {quote_table(table)}"
+        if where_clause:
+            sql += f" WHERE {where_clause}"
+        row = cursor.execute(sql).fetchone()
         return int(row[0])
 
     def iter_rows(
         self,
         schema: TableSchema,
         batch_size: int,
+        where_clause: str | None = None,
     ) -> Iterable[list[tuple[Any, ...]]]:
         columns = ", ".join(quote_ident(column.name) for column in schema.insertable_columns)
         sql = f"SELECT {columns} FROM {quote_table(schema.table)}"
+        if where_clause:
+            sql += f" WHERE {where_clause}"
         cursor = self.connection.cursor()
         cursor.execute(sql)
         while True:
