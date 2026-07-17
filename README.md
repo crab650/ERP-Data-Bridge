@@ -25,6 +25,12 @@ $env:TARGET_DB_PASSWORD = "target_password"
 
 ## Run
 
+Display the current version:
+
+```powershell
+python -m db_migrator --version
+```
+
 Preview the migration without changing the target database:
 
 ```powershell

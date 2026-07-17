@@ -4,6 +4,7 @@ import argparse
 import logging
 import sys
 
+from . import __version__
 from .console import ColorFormatter, banner
 from .config import load_config
 from .factory import create_source, create_target
@@ -12,6 +13,11 @@ from .migrator import Migrator
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Migrate database tables and data.")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"ERP Data Bridge {__version__}",
+    )
     parser.add_argument(
         "--config",
         default="config.yaml",
