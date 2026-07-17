@@ -48,6 +48,12 @@ The CLI uses colored output when the terminal supports ANSI colors. To disable c
 ```powershell
 $env:NO_COLOR = "1"
 ```
+python -m db_migrator --help
+
+python -m db_migrator --version
+
+python -m db_migrator --dry-run
+
 
 ## Configuration
 
