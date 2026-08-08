@@ -15,6 +15,7 @@ class Column:
     nullable: bool
     is_identity: bool = False
     is_computed: bool = False
+    is_rowversion: bool = False
 
 
 @dataclass(frozen=True)
@@ -53,7 +54,11 @@ class TableSchema:
 
     @property
     def insertable_columns(self) -> list[Column]:
-        return [column for column in self.columns if not column.is_computed]
+        return [
+            column
+            for column in self.columns
+            if not column.is_computed and not column.is_rowversion
+        ]
 
 
 class DatabaseSource(ABC):

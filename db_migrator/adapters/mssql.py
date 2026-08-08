@@ -75,7 +75,8 @@ class MssqlSource(DatabaseSource):
                 c.scale,
                 c.is_nullable,
                 c.is_identity,
-                c.is_computed
+                c.is_computed,
+                CASE WHEN c.system_type_id = 189 THEN 1 ELSE 0 END AS is_rowversion
             FROM sys.columns c
             INNER JOIN sys.types ty ON ty.user_type_id = c.user_type_id
             INNER JOIN sys.tables t ON t.object_id = c.object_id
@@ -111,6 +112,7 @@ class MssqlSource(DatabaseSource):
                 nullable=bool(row.is_nullable),
                 is_identity=bool(row.is_identity),
                 is_computed=bool(row.is_computed),
+                is_rowversion=bool(row.is_rowversion),
             )
             for row in cursor.execute(column_sql, table.schema, table.name)
         ]
@@ -230,6 +232,7 @@ class MssqlTarget(DatabaseTarget):
             self.connection.commit()
             return True
         if exists and if_exists == "recreate":
+            self._drop_foreign_keys_referencing(schema.table)
             cursor.execute(f"DROP TABLE {quote_table(schema.table)}")
             self.connection.commit()
 
@@ -299,6 +302,44 @@ class MssqlTarget(DatabaseTarget):
             table.name,
         ).fetchone()
         return row is not None
+
+    def _drop_foreign_keys_referencing(self, table: TableRef) -> None:
+        """Drop target-side foreign keys that prevent recreating a referenced table.
+
+        Recreated tables do not retain their old constraints, so inbound constraints
+        from target tables that have not been recreated yet must be removed first.
+        """
+        cursor = self.connection.cursor()
+        rows = list(
+            cursor.execute(
+                """
+                SELECT
+                    child_schema.name AS schema_name,
+                    child_table.name AS table_name,
+                    fk.name AS constraint_name
+                FROM sys.foreign_keys fk
+                INNER JOIN sys.tables parent_table
+                    ON parent_table.object_id = fk.referenced_object_id
+                INNER JOIN sys.schemas parent_schema
+                    ON parent_schema.schema_id = parent_table.schema_id
+                INNER JOIN sys.tables child_table
+                    ON child_table.object_id = fk.parent_object_id
+                INNER JOIN sys.schemas child_schema
+                    ON child_schema.schema_id = child_table.schema_id
+                WHERE parent_schema.name = ? AND parent_table.name = ?
+                """,
+                table.schema,
+                table.name,
+            )
+        )
+        for row in rows:
+            child = TableRef(row.schema_name, row.table_name)
+            cursor.execute(
+                f"ALTER TABLE {quote_table(child)} "
+                f"DROP CONSTRAINT {quote_ident(row.constraint_name)}"
+            )
+        if rows:
+            self.connection.commit()
 
     def _build_create_table_sql(self, schema: TableSchema) -> str:
         column_defs = [self._column_definition(column) for column in schema.columns]
