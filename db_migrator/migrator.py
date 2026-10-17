@@ -56,9 +56,9 @@ class Migrator:
                 continue
 
             if self.options.include_data:
-                self._copy_data(schema)
+                copied_count = self._copy_data(schema)
                 if self.options.verify_row_counts:
-                    self._verify_row_count(schema.table)
+                    self._verify_row_count(schema.table, copied_count)
 
             if self.options.include_indexes and schema.indexes:
                 logger.info("Creating %s index(es) on %s", len(schema.indexes), table.full_name)
@@ -83,11 +83,12 @@ class Migrator:
             selected.append(table)
         return selected
 
-    def _copy_data(self, schema) -> None:
+    def _copy_data(self, schema) -> int:
         where_clause = self.options.where.get(schema.table.full_name) or self.options.where.get(schema.table.name)
         total = self.source.count_rows(schema.table, where_clause)
         logger.info("Copying %s row(s) from %s", total, schema.table.full_name)
 
+        copied_count = 0
         with tqdm(
             total=total,
             desc=schema.table.full_name,
@@ -97,18 +98,18 @@ class Migrator:
         ) as progress:
             for rows in self.source.iter_rows(schema, self.options.batch_size, where_clause):
                 self.target.insert_rows(schema, rows, self.options.preserve_identity)
+                copied_count += len(rows)
                 progress.update(len(rows))
+        return copied_count
 
-    def _verify_row_count(self, table: TableRef) -> None:
-        where_clause = self.options.where.get(table.full_name) or self.options.where.get(table.name)
-        source_count = self.source.count_rows(table, where_clause)
+    def _verify_row_count(self, table: TableRef, copied_count: int) -> None:
         target_count = self.target.count_rows(table)
-        if source_count != target_count:
+        if copied_count != target_count:
             raise ValueError(
                 f"Row count mismatch for {table.full_name}: "
-                f"source={source_count}, target={target_count}"
+                f"copied={copied_count}, target={target_count}"
             )
-        logger.info("Verified row count for %s: %s", table.full_name, source_count)
+        logger.info("Verified row count for %s: %s", table.full_name, copied_count)
 
     def _preview_table(self, schema) -> None:
         where_clause = self.options.where.get(schema.table.full_name) or self.options.where.get(schema.table.name)
